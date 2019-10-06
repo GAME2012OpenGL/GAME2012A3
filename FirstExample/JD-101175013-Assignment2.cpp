@@ -40,6 +40,9 @@ int WindowHeight = 600;
 glm::vec3 CameraPosition = glm::vec3(0.f, 0.f, 10);
 float fCameraSpeed = 0.5f;
 
+int iNumOfCubes = 0;
+float* CubesAngleArray = nullptr;
+
 GLshort cube_indices[] = {
 	// Front.
 	3, 2, 1, 0, 
@@ -134,6 +137,12 @@ void init(void)
 	
 	// Enable depth test.
 	glEnable(GL_DEPTH_TEST);
+
+	cout << "Enter number of cubes: ";
+	cin >> iNumOfCubes;
+
+	CubesAngleArray = new float[iNumOfCubes];
+	memset(CubesAngleArray, 0.f, sizeof(float) * iNumOfCubes);
 }
 
 //---------------------------------------------------------------------
@@ -141,12 +150,13 @@ void init(void)
 // transformModel
 //
 
-void transformObject(float scale, glm::vec3 rotationAxis, float rotationAngle, glm::vec3 translation) {
+void transformObject(glm::vec3 scale, glm::vec3 rotationAxis, float rotationAngle, glm::vec3 translation) 
+{
 	glm::mat4 Model;
 	Model = glm::mat4(1.0f);
 	Model = glm::translate(Model, translation);
 	Model = glm::rotate(Model, glm::radians(rotationAngle), rotationAxis);
-	Model = glm::scale(Model, glm::vec3(scale));
+	Model = glm::scale(Model, scale);
 	mvp = projection * view * Model;
 	glUniformMatrix4fv(modelID, 1, GL_FALSE, &mvp[0][0]);
 }
@@ -179,23 +189,22 @@ void display(void)
 	//transformObject(0.4f, YZ_AXIS, rotAngle+=((float)45 / (float)1000 * deltaTime), glm::vec3(0.0f, 0.0f, 0.0f));
 	//transformObject(0.4f, YZ_AXIS, rotAngle += 5.0f, glm::vec3(0.0f, 0.0f, 0.0f));
 
-	static float Cub1RotAngle = 0.f;
-	Cub1RotAngle += ((float)45 / (float)1000 * deltaTime);
-	if (Cub1RotAngle >= 360.f)
-		Cub1RotAngle -= 360.f;
-	transformObject(0.3f, Y_AXIS, Cub1RotAngle, glm::vec3(0.f, 0.45f, 0.f));
+	for (int i = 0; i < iNumOfCubes; ++i)
+	{
+		if (i % 2)
+		{
+			CubesAngleArray[i] += ((float)45 / (float)1000 * deltaTime);
+		}
+		else
+		{
+			CubesAngleArray[i] -= ((float)45 / (float)1000 * deltaTime);
+		}
 
-	//Ordering the GPU to start the pipeline
-	glDrawElements(GL_QUADS, 24, GL_UNSIGNED_SHORT, 0);
-	
-	//Second Cube
-	static float Cub2RotAngle = 0.f;
-	Cub2RotAngle -= ((float)45 / (float)1000 * deltaTime);
-	if (Cub2RotAngle <= -360.f)
-		Cub2RotAngle += 360.f;
-	transformObject(0.3f, Y_AXIS, Cub2RotAngle, glm::vec3(0.f, -0.45f, 0.f));
+		transformObject(glm::vec3(0.3f, 0.3f, 0.3f), Y_AXIS, CubesAngleArray[i], glm::vec3(0.f, i * 0.6f, 0.f));
+		glDrawElements(GL_QUADS, 24, GL_UNSIGNED_SHORT, 0);
+	}
 
-	//Ordering the GPU to start the pipeline
+	transformObject(glm::vec3(10.f, 0.3f, 10.f), Y_AXIS, 0.f, glm::vec3(0.f, -0.7, 0.f));
 	glDrawElements(GL_QUADS, 24, GL_UNSIGNED_SHORT, 0);
 
 	glBindVertexArray(0); // Can optionally unbind the vertex array to avoid modification.
@@ -284,4 +293,6 @@ int main(int argc, char** argv)
 	glutPassiveMotionFunc(mouseMove); // or...
 	//glutMotionFunc(mouseMove); // Requires click to register.
 	glutMainLoop();
+
+	delete[] CubesAngleArray;
 }
