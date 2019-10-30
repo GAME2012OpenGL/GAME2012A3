@@ -1,11 +1,10 @@
 ﻿//***************************************************************************
-// JD-101175013-Assignment2.cpp by Jang Doosung (C) 2018 All Rights Reserved.
+// JD-101175013-Assignment3.cpp by Jang Doosung (C) 2018 All Rights Reserved.
 //
-// Assignment 2 submission.
+// Assignment 3 submission.
 //
 // Description:
-// Index draw.
-// Perspective projection
+//	Texture Mapping
 //
 //*****************************************************************************
 
@@ -17,6 +16,7 @@ using namespace std;
 #include "LoadShaders.h"
 #include "glm\glm.hpp"
 #include "glm\gtc\matrix_transform.hpp"
+#include "SoilLib/SOIL.h"
 
 #define X_AXIS glm::vec3(1,0,0)
 #define Y_AXIS glm::vec3(0,1,0)
@@ -43,41 +43,78 @@ float fCameraSpeed = 0.5f;
 int iNumOfCubes = 0;
 float* CubesAngleArray = nullptr;
 
-GLshort cube_indices[] = {
-	// Front.
-	3, 2, 1, 0, 
-	// Left.
-	0, 3, 7, 4,
-	// Bottom.
-	4, 0, 1, 5,
-	// Right.
-	5, 1, 2, 6,
-	// Back.
-	6, 5, 4, 7,
-	// Top.
-	7, 6, 2, 3
+GLshort cube_indices[] = 
+{
+	//Front
+	0, 1, 3,
+	1, 2, 3,
+
+	//Right
+	4, 5, 7,
+	5, 6, 7,
+
+	//Left
+	8, 9, 11,
+	9, 10, 11,
+
+	//Back
+	12, 13, 15,
+	13, 14, 15,
+
+	//Up
+	16, 17, 19,
+	17, 18, 19,
+
+	//DOwn
+	20, 21, 23,
+	21, 22, 23
 };
 
-GLfloat cube_vertices[] = {
-	-0.9f, -0.9f, 0.9f,		// 0.
-	0.9f, -0.9f, 0.9f,		// 1.
-	0.9f, 0.9f, 0.9f,		// 2.
-	-0.9f, 0.9f, 0.9f,		// 3.
-	-0.9f, -0.9f, -0.9f,	// 4.
-	0.9f, -0.9f, -0.9f,		// 5.
-	0.9f, 0.9f, -0.9f,		// 6.
-	-0.9f, 0.9f, -0.9f,		// 7.
+GLfloat cube_vertices[] = 
+{
+	//Front 
+	-1.f, -1.f, 1.f,		// 0.
+	1.f, -1.f, 1.f,			// 1.
+	1.f, 1.f, 1.f,			// 2.
+	-1.f, 1.f, 1.f,			// 3.
+
+	//Right
+	1.f, -1.f, 1.f,		// 4
+	1.f, -1.f, -1.f,			// 5
+	1.f, 1.f, -1.f,			// 6
+	1.f, 1.f, 1.f,			// 7.
+
+	//Left
+	-1.f, -1.f, -1.f,		// 8
+	-1.f, -1.f, 1.f,		// 9
+	-1.f, 1.f, 1.f,			// 10
+	-1.f, 1.f, -1.f,			// 11
+
+	//Back
+	1.f, -1.f, -1.f,		// 12
+	-1.f, -1.f, -1.f,		// 13
+	-1.f, 1.f, -1.f,		// 14
+	1.f, 1.f, -1.f,			// 15
+
+	//Up
+	-1.f, 1.f, 1.f,			//16
+	1.f, 1.f, 1.f,
+	1.f, 1.f, -1.f,
+	-1.f, 1.f, -1.f,
+
+	//Down
+	-1.f, -1.f, -1.f,			//20
+	1.f, -1.f, -1.f,
+	1.f, -1.f, 1.f,
+	-1.f, -1.f, 1.f
 };
 
-GLfloat colours[] = { 
+GLfloat colours[] = 
+{ 
 	1.0f, 0.0f, 0.0f,		
 	0.0f, 1.0f, 0.0f, 
 	0.0f, 0.0f, 1.0f,
 	1.0f, 1.0f, 0.0f,
-	1.0f, 0.0f, 1.0f,
-	0.0f, 1.0f, 1.0f,
-	0.5f, 0.0f, 0.0f,
-	0.0f, 0.5f, 0.0f
 };
 
 void init(void)
@@ -135,14 +172,118 @@ void init(void)
 		
 	//glBindVertexArray(0); // Can optionally unbind the vertex array to avoid modification.
 	
+
+	GLint width, height;
+	unsigned char* image = SOIL_load_image("rubiksCube.png", &width, &height, 0, SOIL_LOAD_RGB);
+	if (image == nullptr)
+	{
+		printf("Error: image not found\n");
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+	GLuint cube_tex = 0;
+	glGenTextures(1, &cube_tex);
+	glBindTexture(GL_TEXTURE_2D, cube_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glUniform1i(glGetUniformLocation(program, "texture0"), 0);
+
+
+	GLfloat textureCoordinates[] =
+	{
+		////Front
+		//0.f, 0.f,
+		//1.f, 0.f,
+		//1.f, 1.f, 
+		//0.f, 1.f,
+
+		////RIght
+		//0.f, 0.f,
+		//1.f, 0.f,
+		//1.f, 1.f,
+		//0.f, 1.f,
+
+		////Left
+		//0.f, 0.f,
+		//1.f, 0.f,
+		//1.f, 1.f,
+		//0.f, 1.f,
+
+		////Back
+		//0.f, 0.f,
+		//1.f, 0.f,
+		//1.f, 1.f,
+		//0.f, 1.f,
+
+		////Up
+		//0.f, 0.f,
+		//1.f, 0.f,
+		//1.f, 1.f,
+		//0.f, 1.f,
+
+		////DOwn
+		//0.f, 0.f,
+		//1.f, 0.f,
+		//1.f, 1.f,
+		//0.f, 1.f
+
+
+		//Front
+		0.25f, 0.33f,
+		0.5f, 0.33f,
+		0.5f, 0.66f,
+		0.25f, 0.66f,
+
+		//RIght
+		0.5f, 0.33f,
+		0.75f, 0.33f,
+		0.75f, 0.66f,
+		0.5f, 0.66f,
+
+		//Left
+		0.f, 0.33f,
+		0.25f, 0.33f,
+		0.25f, 0.66f,
+		0.f, 0.66f,
+
+		//Back
+		0.75f, 0.33f,
+		1.f, 0.33f,
+		1.f, 0.66f,
+		0.75f, 0.66f,
+
+		//Up
+		0.25f, 0.66f,
+		0.5f, 0.66f,
+		0.5f, 1.f,
+		0.25f, 1.f,
+
+		//Down
+		0.25f, 0.f,
+		0.5f, 0.f,
+		0.5f, 0.33f,
+		0.25f, 0.33f
+	};
+
+	GLuint cube_tex_vbo = 0;
+	glGenBuffers(1, &cube_tex_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, cube_tex_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoordinates), textureCoordinates, GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(2);
+
+
 	// Enable depth test.
 	glEnable(GL_DEPTH_TEST);
 
-	cout << "Enter number of cubes: ";
+	/*cout << "Enter number of cubes: ";
 	cin >> iNumOfCubes;
 
 	CubesAngleArray = new float[iNumOfCubes];
-	memset(CubesAngleArray, 0.f, sizeof(float) * iNumOfCubes);
+	memset(CubesAngleArray, 0.f, sizeof(float) * iNumOfCubes);*/
 }
 
 //---------------------------------------------------------------------
@@ -181,7 +322,7 @@ void display(void)
 		glm::vec3(0, 1, 0)		// Head is up (set to 0,-1,0 to look upside-down)
 	);
 
-	glClearColor(0.0f, 1.0f, 0.0f, 1.f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	glBindVertexArray(vao);
@@ -189,23 +330,26 @@ void display(void)
 	//transformObject(0.4f, YZ_AXIS, rotAngle+=((float)45 / (float)1000 * deltaTime), glm::vec3(0.0f, 0.0f, 0.0f));
 	//transformObject(0.4f, YZ_AXIS, rotAngle += 5.0f, glm::vec3(0.0f, 0.0f, 0.0f));
 
-	for (int i = 0; i < iNumOfCubes; ++i)
-	{
-		if (i % 2)
-		{
-			CubesAngleArray[i] += ((float)45 / (float)1000 * deltaTime);
-		}
-		else
-		{
-			CubesAngleArray[i] -= ((float)45 / (float)1000 * deltaTime);
-		}
+	//for (int i = 0; i < iNumOfCubes; ++i)
+	//{
+	//	if (i % 2)
+	//	{
+	//		CubesAngleArray[i] += ((float)45 / (float)1000 * deltaTime);
+	//	}
+	//	else
+	//	{
+	//		CubesAngleArray[i] -= ((float)45 / (float)1000 * deltaTime);
+	//	}
 
-		transformObject(glm::vec3(0.3f, 0.3f, 0.3f), Y_AXIS, CubesAngleArray[i], glm::vec3(0.f, i * 0.6f, 0.f));
-		glDrawElements(GL_QUADS, 24, GL_UNSIGNED_SHORT, 0);
-	}
+	//	transformObject(glm::vec3(0.3f, 0.3f, 0.3f), Y_AXIS, CubesAngleArray[i], glm::vec3(0.f, i * 0.6f, 0.f));
+	//	glDrawElements(GL_QUADS, 24, GL_UNSIGNED_SHORT, 0);
+	//}
 
-	transformObject(glm::vec3(10.f, 0.3f, 10.f), Y_AXIS, 0.f, glm::vec3(0.f, -0.7, 0.f));
-	glDrawElements(GL_QUADS, 24, GL_UNSIGNED_SHORT, 0);
+	//transformObject(glm::vec3(10.f, 0.3f, 10.f), Y_AXIS, 0.f, glm::vec3(0.f, -0.7, 0.f));
+	//glDrawElements(GL_QUADS, 24, GL_UNSIGNED_SHORT, 0);
+
+	transformObject(glm::vec3(1.f, 1.f, 1.f), Z_AXIS, 0.f, glm::vec3(0.0f, 0.0f, 0.0f));
+	glDrawElements(GL_TRIANGLES, sizeof(cube_indices) / sizeof(GLshort), GL_UNSIGNED_SHORT, 0);
 
 	glBindVertexArray(0); // Can optionally unbind the vertex array to avoid modification.
 
