@@ -26,6 +26,9 @@ using namespace std;
 #define XZ_AXIS glm::vec3(1,0,1)
 
 GLuint vao, ibo, points_vbo, colours_vbo, modelID;
+GLuint cube_tex = 0;
+
+GLuint Pyramid_vao, Pyramid_ibo, Pyramid_points_vbo, Pyramid_tex;
 float rotAngle = 0.0f;
 
 // Horizontal and vertical ortho offsets.
@@ -73,40 +76,40 @@ GLshort cube_indices[] =
 GLfloat cube_vertices[] = 
 {
 	//Front 
-	-1.f, -1.f, 1.f,		// 0.
-	1.f, -1.f, 1.f,			// 1.
-	1.f, 1.f, 1.f,			// 2.
-	-1.f, 1.f, 1.f,			// 3.
+	-1.3f, -1.3f, 1.3f,		// 0.
+	1.3f, -1.3f, 1.3f,			// 1.3
+	1.3f, 1.3f, 1.3f,			// 2.
+	-1.3f, 1.3f, 1.3f,			// 3.
 
 	//Right
-	1.f, -1.f, 1.f,		// 4
-	1.f, -1.f, -1.f,			// 5
-	1.f, 1.f, -1.f,			// 6
-	1.f, 1.f, 1.f,			// 7.
+	1.3f, -1.3f, 1.3f,		// 4
+	1.3f, -1.3f, -1.3f,			// 5
+	1.3f, 1.3f, -1.3f,			// 6
+	1.3f, 1.3f, 1.3f,			// 7.
 
 	//Left
-	-1.f, -1.f, -1.f,		// 8
-	-1.f, -1.f, 1.f,		// 9
-	-1.f, 1.f, 1.f,			// 10
-	-1.f, 1.f, -1.f,			// 11
+	-1.3f, -1.3f, -1.3f,		// 8
+	-1.3f, -1.3f, 1.3f,		// 9
+	-1.3f, 1.3f, 1.3f,			// 10
+	-1.3f, 1.3f, -1.3f,			// 11
 
 	//Back
-	1.f, -1.f, -1.f,		// 12
-	-1.f, -1.f, -1.f,		// 13
-	-1.f, 1.f, -1.f,		// 14
-	1.f, 1.f, -1.f,			// 15
+	1.3f, -1.3f, -1.3f,		// 12
+	-1.3f, -1.3f, -1.3f,		// 13
+	-1.3f, 1.3f, -1.3f,		// 14
+	1.3f, 1.3f, -1.3f,			// 15
 
 	//Up
-	-1.f, 1.f, 1.f,			//16
-	1.f, 1.f, 1.f,
-	1.f, 1.f, -1.f,
-	-1.f, 1.f, -1.f,
+	-1.3f, 1.3f, 1.3f,			//16
+	1.3f, 1.3f, 1.3f,
+	1.3f, 1.3f, -1.3f,
+	-1.3f, 1.3f, -1.3f,
 
 	//Down
-	-1.f, -1.f, -1.f,			//20
-	1.f, -1.f, -1.f,
-	1.f, -1.f, 1.f,
-	-1.f, -1.f, 1.f
+	-1.3f, -1.3f, -1.3f,			//20
+	1.3f, -1.3f, -1.3f,
+	1.3f, -1.3f, 1.3f,
+	-1.3f, -1.3f, 1.3f
 };
 
 GLfloat colours[] = 
@@ -115,6 +118,54 @@ GLfloat colours[] =
 	0.0f, 1.0f, 0.0f, 
 	0.0f, 0.0f, 1.0f,
 	1.0f, 1.0f, 0.0f,
+};
+
+GLfloat Pyramid_vertices[] =
+{
+	//Bottom
+	-1.f, 0.f, -1.f,	//0
+	1.f, 0.f, -1.f,
+	1.f, 0.f, 1.f,
+	-1.f, 0.f, 1.f,
+
+	//Front
+	-1.f, 0.f, 1.f,		//4
+	1.f, 0.f, 1.f,
+	0.f, 2.f, 0.f,
+
+	//Right
+	1.f, 0.f, 1.f,		//7
+	1.f, 0.f, -1.f,
+	0.f, 2.f, 0.f,
+
+	//Left
+	-1.f, 0.f, -1.f,	//10
+	-1.f, 0.f, 1.f,
+	0.f, 2.f, 0.f,
+
+	//Back
+	1.f, 0.f, -1.f,		//13
+	-1.f, 0.f, -1.f,
+	0.f, 2.f, 0.f
+};
+
+GLshort Pyramid_indices[] =
+{
+	//Bottom
+	0, 1, 3,
+	1, 2, 3,
+
+	//Front
+	4, 5, 6,
+
+	//Right
+	7, 8, 9,
+
+	//Left
+	10, 11, 12,
+
+	//Back
+	13, 14, 15
 };
 
 void init(void)
@@ -181,7 +232,6 @@ void init(void)
 	}
 
 	glActiveTexture(GL_TEXTURE0);
-	GLuint cube_tex = 0;
 	glGenTextures(1, &cube_tex);
 	glBindTexture(GL_TEXTURE_2D, cube_tex);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
@@ -276,6 +326,79 @@ void init(void)
 	glEnableVertexAttribArray(2);
 
 
+	/////////////////////////////Pyramid//////////////////////////
+	glGenVertexArrays(1, &Pyramid_vao);
+	glBindVertexArray(Pyramid_vao);
+
+	glGenBuffers(1, &Pyramid_ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Pyramid_ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Pyramid_indices), Pyramid_indices, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &Pyramid_points_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, Pyramid_points_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Pyramid_vertices), Pyramid_vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(0);
+
+	//glBindBuffer(GL_ARRAY_BUFFER, 0); // Can optionally unbind the buffer to avoid modification.
+
+//glBindVertexArray(0); // Can optionally unbind the vertex array to avoid modification.
+
+
+	unsigned char* image2 = SOIL_load_image("bonusTexture.png", &width, &height, 0, SOIL_LOAD_RGB);
+	if (image2 == nullptr)
+	{
+		printf("Error: image not found\n");
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &Pyramid_tex);
+	glBindTexture(GL_TEXTURE_2D, Pyramid_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image2);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glUniform1i(glGetUniformLocation(program, "texture0"), 0);
+
+
+	GLfloat Pyramid_textureCoordinates[] =
+	{
+		//Bottom
+		0.f, 0.f, 
+		1.f, 0.f,
+		1.f, 1.f,
+		0.f, 1.f,
+
+		//Front
+		0.f, 0.f,
+		1.f, 0.f,
+		0.5f, 1.f,
+
+		//RIght
+		0.f, 0.f,
+		1.f, 0.f,
+		0.5f, 1.f,
+
+		//Left
+		0.f, 0.f,
+		1.f, 0.f,
+		0.5f, 1.f,
+
+		//Back
+		0.f, 0.f,
+		1.f, 0.f,
+		0.5f, 1.f
+	};
+
+	GLuint Pyramid_tex_vbo = 0;
+	glGenBuffers(1, &Pyramid_tex_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, Pyramid_tex_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Pyramid_textureCoordinates), Pyramid_textureCoordinates, GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(2);
+
+
 	// Enable depth test.
 	glEnable(GL_DEPTH_TEST);
 
@@ -325,6 +448,7 @@ void display(void)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
+	glBindTexture(GL_TEXTURE_2D, cube_tex);
 	glBindVertexArray(vao);
 
 	//transformObject(0.4f, YZ_AXIS, rotAngle+=((float)45 / (float)1000 * deltaTime), glm::vec3(0.0f, 0.0f, 0.0f));
@@ -348,10 +472,25 @@ void display(void)
 	//transformObject(glm::vec3(10.f, 0.3f, 10.f), Y_AXIS, 0.f, glm::vec3(0.f, -0.7, 0.f));
 	//glDrawElements(GL_QUADS, 24, GL_UNSIGNED_SHORT, 0);
 
-	transformObject(glm::vec3(1.f, 1.f, 1.f), Z_AXIS, 0.f, glm::vec3(0.0f, 0.0f, 0.0f));
+	static float fCubeAngle1 = 0.f;
+	fCubeAngle1 += ((float)45 / (float)1000 * deltaTime);
+	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, fCubeAngle1, glm::vec3(3.0f, 0.0f, 0.0f));
 	glDrawElements(GL_TRIANGLES, sizeof(cube_indices) / sizeof(GLshort), GL_UNSIGNED_SHORT, 0);
 
-	glBindVertexArray(0); // Can optionally unbind the vertex array to avoid modification.
+	static float fCubeAngle2 = 0.f;
+	fCubeAngle2 -= ((float)45 / (float)1000 * deltaTime);
+	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, fCubeAngle2, glm::vec3(-3.0f, 0.0f, 0.0f));
+	glDrawElements(GL_TRIANGLES, sizeof(cube_indices) / sizeof(GLshort), GL_UNSIGNED_SHORT, 0);
+
+
+	glBindTexture(GL_TEXTURE_2D, Pyramid_tex);
+	glBindVertexArray(Pyramid_vao);
+
+	transformObject(glm::vec3(1.f, 1.f, 1.f), Y_AXIS, 0.f, glm::vec3(0.0f, 0.0f, 2.0f));
+	glDrawElements(GL_TRIANGLES, sizeof(Pyramid_indices) / sizeof(GLshort), GL_UNSIGNED_SHORT, 0);
+
+
+
 
 	glutSwapBuffers(); // Instead of double buffering.
 }
